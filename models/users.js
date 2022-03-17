@@ -19,7 +19,12 @@ const userSchema = new schema({
     require:true
   },
   gender: String,
-  image: String
+  image: String,
+  isStore:{
+    type: Boolean,
+    require: true,
+    default:false
+  },
 })
 
 module.exports = mongoose.model("users",userSchema);
