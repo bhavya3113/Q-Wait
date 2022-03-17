@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose"); 
 const dotenv = require("dotenv");
+const authRoutes = require("./routes/auth");
 
 dotenv.config();
 const app = express();
@@ -14,9 +15,10 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use('/auth',authRoutes);
 
 app.use((error, req, res, next) => {
-  console.log(error);
+  // console.log(error);
   const status = error.statusCode || 500;
   const message = error.message;
   const data = error.data;
