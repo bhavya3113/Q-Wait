@@ -10,7 +10,6 @@ const Otp = require("../models/otp");
 const mail = require("../utils/sendemail");
 
 var emailregex = /^[-!#$%&'*+\/0-9=?A-Z^_a-z{|}~](\.?[-!#$%&'*+\/0-9=?A-Z^_a-z`{|}~])*@[a-zA-Z0-9](-*\.?[a-zA-Z0-9])*\.[a-zA-Z](-?[a-zA-Z0-9])+$/
-
 exports.signup = async(req, res, next) => {
   try{
     const errors = validationResult(req);
