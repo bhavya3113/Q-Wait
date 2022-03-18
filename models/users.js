@@ -25,6 +25,10 @@ const userSchema = new schema({
     require: true,
     default:false
   },
+  passVerify:{
+    type: Boolean,
+    default: false
+  }
 })
 
 module.exports = mongoose.model("users",userSchema);
