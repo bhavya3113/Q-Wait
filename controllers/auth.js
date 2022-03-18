@@ -63,10 +63,11 @@ exports.otp = async (req, res, next) => {
 
 exports.otpVerification = async (req, res, next) => {
   try {
-    const { email, otp, password, confirmPass } = req.body;
+    const { email, otp, password, confirmPass, name, mobileno, gender, role, } = req.body;
     const userInDb = await User.findOne({ email: email });
-    if (userInDb)
-        return res.status(401).send('Already verified.');
+    const storeInDb = await Store.findOne({ email: email });
+    if (userInDb||storeInDb)
+        return res.status(401).send('Already registered.');
 
     const newotp = await Otp.findOne({ email: email });
     if (!newotp) {
@@ -85,15 +86,32 @@ exports.otpVerification = async (req, res, next) => {
       error.statusCode = 422;
       throw error;
     }
-    const hashedPassword = await bcrypt.hash(password, 12)
-    const user = new User({
-      email: email,
-      password: hashedPassword
+    const hashedPassword = await bcrypt.hash(password, 12);
+    let newUser;
+    if (role == "Store")
+    {
+      newUser = new Store({
+        email: email,
+        password: hashedPassword,
+        fullname: name,
+        mobileno: mobileno,
+        gender: gender
+      })
+      await newUser.save();
+    }
+    else
+    {
+      newUser = new User({
+       email: email,
+       password: hashedPassword,
+       fullname: name,
+       mobileno: mobileno,
+       gender: gender
     });
-    await user.save();
-
-    const accesstoken = jwt.sign({ email: email, userId: user._id }, process.env.ACCESS_TOKEN_KEY, { expiresIn: '1h' });
-    const refreshtoken = jwt.sign({ email: email, userId: user._id }, process.env.REFRESH_TOKEN_KEY, { expiresIn: "30d" });
+    await newUser.save();
+  }
+    const accesstoken = jwt.sign({ email: email, userId: newUser._id }, process.env.ACCESS_TOKEN_KEY, { expiresIn: '1h' });
+    const refreshtoken = jwt.sign({ email: email, userId: newUser._id }, process.env.REFRESH_TOKEN_KEY, { expiresIn: "30d" });
     const token = new Token({
       email: email,
       token: refreshtoken
@@ -109,71 +127,49 @@ exports.otpVerification = async (req, res, next) => {
   }
 }
 
-exports.details = async (req, res, next) => {
-  try {
-    const { name, mobileno, gender, role, email } = req.body
-    const user = await User.findOne({ email: email });
-    if (!user) {
-      const error = new Error("User is not registered !!");
-      error.statusCode = 400;
-      throw error;
-    }
-    user.fullname = name;
-    user.mobileno = mobileno;
-    user.gender = gender;
-    user.role = role;
-
-    if (role == "Store") {
-      if (user.isStore == true) {
-        const error = new Error("Already registered as store !!");
-        error.statusCode = 400;
-        throw error;
-      }
-      else {
-        user.isStore = true;
-        const store = new Store({
-          details: user._id,
-        })
-        await store.save();
-      }
-    }
-    await user.save();
-
-    return res.status(200).json({ message: "details saved" });
-  }
-  catch (err) {
-    if (!err.statusCode) {
-      err.statusCode = 500;
-    }
-    next(err);
-  }
-}
-
 exports.login = async (req, res, next) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(422).json({ Error: "Validation Failed" });
     }
-    const { email, password } = req.body;
+    const { email, password,isStore } = req.body;
     var validemail = emailregex.test(email);
     if (!validemail) {
       const error = new Error('Please enter a valid email');
       error.statusCode = 422;
       throw error;
     }
-    const user = await User.findOne({ email: email });
+    let user;
+    if(isStore == false){
+      user = await User.findOne({ email: email });
 
-    if (!user) {
-      const error = new Error("User is not registered !!");
-      error.statusCode = 400;
-      throw error;
+      if (!user) {
+        const error = new Error("User is not registered !!");
+        error.statusCode = 400;
+        throw error;
+      }
+      const result = await bcrypt.compare(password, user.password);
+      if (!result) {
+        const error = new Error('Incorrect Password');
+        error.statusCode = 403;
+        throw error;
+      }
     }
-    const result = await bcrypt.compare(password, user.password);
-    if (!result) {
-      const error = new Error('Incorrect Password');
-      error.statusCode = 403;
-      throw error;
+    else{
+      user = await Store.findOne({ email: email });
+
+      if (!user) {
+        const error = new Error("Store is not registered !!");
+        error.statusCode = 400;
+        throw error;
+      }
+      const result = await bcrypt.compare(password, user.password);
+      if (!result) {
+        const error = new Error('Incorrect Password');
+        error.statusCode = 403;
+        throw error;
+      }
     }
     const accesstoken = jwt.sign({ email: email, userId: user._id }, process.env.ACCESS_TOKEN_KEY, { expiresIn: '1h' });
     const refreshtoken = jwt.sign({ email: email, userId: user._id }, process.env.REFRESH_TOKEN_KEY, { expiresIn: "30d" });
@@ -182,7 +178,7 @@ exports.login = async (req, res, next) => {
       token: refreshtoken
     })
     await token.save();
-    return res.status(200).json({ message: "LoggedIn", email: email, access_token: accesstoken, refresh_token: refreshtoken, isStore: user.isStore });
+    return res.status(200).json({ message: "LoggedIn", email: email, access_token: accesstoken, refresh_token: refreshtoken });
 
   }
   catch (err) {
@@ -208,7 +204,7 @@ exports.generateAccessToken = async (req, res, next) => {
       throw error;
     }
     const payload = jwt.verify(tokenInDb.token, process.env.REFRESH_TOKEN_KEY);
-    const accessToken = jwt.sign({ id: payload.id, email: payload.email }, process.env.ACCESS_TOKEN_KEY, { expiresIn: "1h" });
+    const accessToken = jwt.sign({ id: payload._id, email: payload.email }, process.env.ACCESS_TOKEN_KEY, { expiresIn: "1h" });
     return res.status(200).json({ access_token: accessToken });
   }
   catch (err) {
