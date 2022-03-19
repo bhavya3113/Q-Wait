@@ -12,7 +12,8 @@ router.post("/otpVerification", [
   body("password").trim().isLength({ min: 6 })
 ], authController.otpVerification);
 
-router.post("/login",[body("email").normalizeEmail()], authController.login);
+router.post("/login",[body("email").normalizeEmail().isEmail()
+.withMessage('please enter a valid email')], authController.login);
 
 router.post("/generateaccesstoken", authController.generateAccessToken);
 

@@ -3,11 +3,26 @@ const schema = mongoose.Schema;
 
 const storeSchema = new schema({
  
-  details:{
-    type: schema.Types.ObjectId,
-    require:true,
-    ref:'users',
+  fullname:{
+    type: String,
+    require: true
   },
+  email:{
+    type: String,
+    require: true
+  },
+  password:{
+    type: String,
+    require:true
+  },
+  mobileno:{
+    type: Number,
+    require:true
+  },
+  gender: String,
+  image: String,
+  category: String,
+  
   verified:{
     type: Boolean,
     require: true,

@@ -20,11 +20,6 @@ const userSchema = new schema({
   },
   gender: String,
   image: String,
-  isStore:{
-    type: Boolean,
-    require: true,
-    default:false
-  },
   passVerify:{
     type: Boolean,
     default: false
