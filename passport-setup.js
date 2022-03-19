@@ -16,6 +16,8 @@ passport.use(new GoogleStrategy({
     callbackURL:"http://localhost:8080/auth/google/callback"
     },
     function(accessToken , refreshToken , profile , done){
+        console.log(accessToken);
+        console.log(profile);
         return done(null,profile);
     }
 )); 

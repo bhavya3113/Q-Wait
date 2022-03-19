@@ -27,7 +27,7 @@ app.use((req, res, next) => {
 app.use('/auth',authRoutes);
 app.get("/failed",(req,res)=>res.json("failed to login"));
 app.get('/google',passport.authenticate('google',{scope:['profile','email']}));
-app.get('/google/callback',passport.authenticate("google",{failureRedirect:'/failed'}),
+app.get('/auth/google/callback',passport.authenticate("google",{failureRedirect:'/failed'}),
   function(req,res){
     res.json("welcome"); 
   }
